@@ -22,26 +22,28 @@ router.get("/list" , async (req,res) => {
 })
 
 router.get("/", async(req,res) => {
-    const {type} = req.query;
-    if (proxyTypeList.indexOf(type) < 0) return res.status(400).send("Specific proxies type");
+    // const {type} = req.query;
+    // if (proxyTypeList.indexOf(type) < 0) return res.status(400).send("Specific proxies type");
 
-    const proxies = await Proxy.find({type: type});
+    // const proxies = await Proxy.find({type: type});
 
-    if (proxies.length == 0) return res.send("No proxies"); 
+    // if (proxies.length == 0) return res.send("No proxies"); 
 
-    let minNumber = proxies[0].numberOfConnection;
-    let selectedProxy = proxies[0];
-    for (let i = 0; i < proxies.length ; i ++){
+    // let minNumber = proxies[0].numberOfConnection;
+    // let selectedProxy = proxies[0];
+    // for (let i = 0; i < proxies.length ; i ++){
         
-        if (proxies[i].numberOfConnection < minNumber){
-            minNumber = proxies[i].numberOfConnection;
-            selectedProxy = proxies[i];
-        } 
+    //     if (proxies[i].numberOfConnection < minNumber){
+    //         minNumber = proxies[i].numberOfConnection;
+    //         selectedProxy = proxies[i];
+    //     } 
         
-    }
-    const updatedProxy = await Proxy.findOneAndUpdate({_id: selectedProxy._id},{numberOfConnection: selectedProxy.numberOfConnection + 1});
+    // }
+    // const updatedProxy = await Proxy.findOneAndUpdate({_id: selectedProxy._id},{numberOfConnection: selectedProxy.numberOfConnection + 1});
 
-    return res.send(updatedProxy); 
+    // return res.send(updatedProxy); 
+    const proxies = await Proxy.find({});
+    return res.send(proxies);
 })
 router.post("/",async  (req,res,next) => {
   const {proxy,type} = req.body;
