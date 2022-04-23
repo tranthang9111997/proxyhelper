@@ -4,8 +4,6 @@ const proxy_model = require("../model/proxy");
 const proxy_custom=require("../model/proxy_custom");
 const port=require("../model/port_custom");
 const ProxyChain = require('proxy-chain');
-const kill = require('kill-port');
-const { killPortProcess } = require('kill-port-process');
 var http = require('http');
 /* GET home page. */
 const proxyTypeList = ["auth","none","custom"];
@@ -33,9 +31,6 @@ router.get("/creat",async  (req,res,next) => {
           })
         
     }
-})
-router.get("/close",async  (req,res,next) => {
-   try{ kill(9000, 'tcp');}catch{}    
 })
 router.post("/addproxy",async  (req,res,next) => {
     const {proxy,type} = req.body;
