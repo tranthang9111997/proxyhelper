@@ -40,10 +40,11 @@ app.listen(port, async () => {
    // await proxiesRouter.loadProxies(proxies);
     
     console.log(`Listening to requests on http://localhost:${port}`);
+    request();
 
 });
 function request(){
-    http.get('http://localhost:8000/proxies/reloadcustom?type=custom', function(response) {
+    http.get('http://66.42.42.254:8000/proxies/reloadcustom?type=custom', function(response) {
     console.log('Status:', response.statusCode);
     console.log('Headers: ', response.headers);
     response.pipe(process.stdout);

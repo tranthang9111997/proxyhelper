@@ -105,13 +105,13 @@ function createProxy(proxy,port){
     console.error(error);
   });
 }
-function request(){
-  http.get('http://localhost:8000/proxies/reloadcustom?type=custom', function(response) {
-  console.log('Status:', response.statusCode);
-  console.log('Headers: ', response.headers);
-  response.pipe(process.stdout);
-});
-}
+// function request(){
+//   http.get('http://localhost:8000/proxies/reloadcustom?type=custom', function(response) {
+//   console.log('Status:', response.statusCode);
+//   console.log('Headers: ', response.headers);
+//   response.pipe(process.stdout);
+// });
+// }
 router.loadProxies = async function loadProxies(proxies){
 
   for (let i = 0; i < proxies.length; i ++){
@@ -126,8 +126,8 @@ router.loadProxies = async function loadProxies(proxies){
     const port = await port_main.find({});
     port.forEach(async proxie => {
         const proxies_change = await proxy_custom.aggregate([{ $sample: { size: 1 } }]);
-      await port_main.updateOne({fowardPort: proxie.fowardPort},{$set:{host:proxies_change[0].host,port:proxies_change[0].port}})
-        await createProxy(proxies_change[0], proxie.fowardPort);
+         await port_main.updateOne({fowardPort: proxie.fowardPort},{$set:{host:proxies_change[0].host,port:proxies_change[0].port}})
+          await createProxy(proxies_change[0], proxie.fowardPort);
       });
     res.send("Reloaded done");
   })
