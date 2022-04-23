@@ -2,14 +2,8 @@ const mongoose = require("mongoose");
 
 const Schema = mongoose.Schema;
 
-let Proxy = new Schema(
+let port= new Schema(
   {
-    username: {
-      type: String
-    },
-    password: {
-      type: String
-    },
     host: {
       type: String
         },
@@ -22,20 +16,13 @@ let Proxy = new Schema(
     },
     type:{
       type: String,
-      default: "none"
+      default: "custom"
     },
     fowardPort:{
       type: Number,
       default: 0
-    },
-    data:{
-      type:String
-    },
-    time:{
-      type:Number,
-      default:0
     }
 }
 );
 
-module.exports = mongoose.model("Proxy", Proxy);
+module.exports = mongoose.model("port", port);

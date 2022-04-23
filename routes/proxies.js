@@ -2,24 +2,14 @@
 
 var express = require('express');
 var router = express.Router();
-const Proxy = require("../model/Proxy");
+const proxy_model = require("../model/proxy");
+const proxy_custom=require("../model/proxy_custom");
+const port_main=require("../model/port_custom");
 const ProxyChain = require('proxy-chain');
-
-
-const proxyTypeList = ["auth","none"];
-
-router.get("/list" , async (req,res) => {
-    const {type} = req.query;
-    if (proxyTypeList.indexOf(type) < 0) return res.status(400).send("Specific proxies type");
-
-    const proxies = await Proxy.find({type: type});
-    let proxieString = '<pre>'
-    proxies.forEach(proxie => {
-        const {host,port,username,password} = proxie;
-        proxieString += `${host}|${port}|${username}|${password}<pre>`
-    })
-    res.send(proxieString);
-})
+const kill = require('kill-port');
+var net = require('net');
+var http = require('http');
+const proxyTypeList = ["auth","none","custom"];
 
 router.get("/", async(req,res) => {
     // const {type} = req.query;
@@ -82,26 +72,22 @@ router.get("/view", async(req,res)=>{
 })
 
 function createProxy(proxy,port){
- 
   const server = new ProxyChain.Server({
       // Port where the server will listen. By default 8000.
       port: port,
-
       // Enables verbose logging
       verbose: true,
-
       prepareRequestFunction: ({ request, username, password, hostname, port, isHttp, connectionId }) => {
             let proxyUrl = null;
             if (proxy.type == "auth"){
                 proxyUrl = `http://${proxy.username}:${proxy.password}@${proxy.host}:${proxy.port}`;
             }
-            if (proxy.type == "none"){
+            if (proxy.type == "none"||proxy.type == "custom"){
                 proxyUrl = `http://${proxy.host}:${proxy.port}`;
             }
             if (proxyUrl == null) return;
             return {
               upstreamProxyUrl: proxyUrl ,
-
               failMsg: 'Bad username or password, please try again.',
             };
       },
@@ -109,7 +95,22 @@ function createProxy(proxy,port){
   server.listen(() => {
     console.log(`Proxy server is listening on port ${server.port}`);
   });
-
+  server.on('connectionClosed', ({ connectionId, stats }) => {
+    console.log(`Connection ${connectionId} closed`);
+    console.dir(stats);
+  });
+  // Emitted when HTTP request fails
+  server.on('requestFailed', ({ request, error }) => {
+    console.log(`Request ${request.url} failed`);
+    console.error(error);
+  });
+}
+function request(){
+  http.get('http://localhost:8000/proxies/reloadcustom?type=custom', function(response) {
+  console.log('Status:', response.statusCode);
+  console.log('Headers: ', response.headers);
+  response.pipe(process.stdout);
+});
 }
 router.loadProxies = async function loadProxies(proxies){
 
@@ -118,6 +119,19 @@ router.loadProxies = async function loadProxies(proxies){
     await Proxy.findOneAndUpdate({"_id": proxies[i]._id},{fowardPort: 1710+i})
   }
 }
+  router.get("/reloadcustom", async(req,res) => {
+    
+    const {type} = req.query;
+    if (proxyTypeList.indexOf(type) < 0) return res.status(400).send("Specific proxies type");
+    const port = await port_main.find({});
+    port.forEach(async proxie => {
+        const proxies_change = await proxy_custom.aggregate([{ $sample: { size: 1 } }]);
+      await port_main.updateOne({fowardPort: proxie.fowardPort},{$set:{host:proxies_change[0].host,port:proxies_change[0].port}})
+        await createProxy(proxies_change[0], proxie.fowardPort);
+      });
+    res.send("Reloaded done");
+  })
+
 
 router.get("/reload", async(req,res) => {
     const {type} = req.query;
@@ -136,30 +150,6 @@ router.get("/reloadAll", async(req,res) => {
     }
     return res.send("Reloaded All Done")
 })
-
-// router.get("/pac", async(req,res) => {
-//   const {host,port} = req.query;
-//     if (!host || !port) return res.send("Invalid configuration");
-
-//     res.send(`function FindProxyForURL(url,host){
-//         if (dnsDomainIs(host,'api.textnow.me') 
-//         || dnsDomainIs(host,'icanhazip.com')
-//         || shExpMatch(host,'perimeterx')
-//         || shExpMatch(host, 'apple')
-//         || shExpMatch(host, 'leanplum')
-//         || shExpMatch(host, 'oath') 
-//         || shExpMatch(host, 'emb-api')
-//         || shExpMatch(host, 'yahoo')
-//         || shExpMatch(host, 'doubleclick')
-//         || shExpMatch(host, 'app-measurement')
-//         || shExpMatch(host, 'doubleclick')
-//         || dnsDomainIs(host, '.ip-api.com')
-
-//         ) return 'PROXY ${host}:${port}';
-//         return "DIRECT";
-// }`);
-// })
-
 router.get("/pac", async(req,res) => {
   const {host,port} = req.query;
     if (!host || !port) return res.send("Invalid configuration");
