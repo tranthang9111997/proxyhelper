@@ -119,15 +119,21 @@ router.loadProxies = async function loadProxies(proxies){
     await Proxy.findOneAndUpdate({"_id": proxies[i]._id},{fowardPort: 1710+i})
   }
 }
+
+function getRandomInt(max) {
+  return Math.floor(Math.random() * max);
+}
   router.get("/reloadcustom", async(req,res) => {
     
     const {type} = req.query;
     if (proxyTypeList.indexOf(type) < 0) return res.status(400).send("Specific proxies type");
     const port = await port_main.find({});
     port.forEach(async proxie => {
-        const proxies_change = await proxy_custom.aggregate([{ $sample: { size: 1 } }]);
-         await port_main.updateOne({fowardPort: proxie.fowardPort},{$set:{host:proxies_change[0].host,port:proxies_change[0].port}})
-          await createProxy(proxies_change[0], proxie.fowardPort);
+      var vitri=getRandomInt(3001);
+        //const proxies_change = await proxy_custom.aggregate([{ $sample: { size: 1 } }]);
+        const proxies_change = await proxy_custom.find({});
+         await port_main.updateOne({fowardPort: proxie.fowardPort},{$set:{host:proxies_change[vitri].host,port:proxies_change[vitri].port}})
+          await createProxy(proxies_change[vitri], proxie.fowardPort);
       });
     res.send("Reloaded done");
   })
